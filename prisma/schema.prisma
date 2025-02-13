@@ -17,6 +17,7 @@ model User {
   roleId        String?
   accounts      Account[]
   sessions      Session[]
+  loans         Loan[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -56,6 +57,8 @@ model Session {
 enum Enum_RoleName {
   ADMIN
   USER
+  TECHNICAL
+  COORDINATOR
 }
 
 model Role {
@@ -65,4 +68,120 @@ model Role {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum Enum_Category {
+  LAPTOP
+  PC
+  MOBILE
+  TABLET
+}
+
+model Device {
+  deviceId           String        @id @default(cuid())
+  loans              LoanDevice[]
+  tikets             Tiket[]
+  serialNumber       String
+  model              String
+  RAMReference       String
+  RAMInfo            String
+  processorReference String
+  perocessorInfo     String
+  GPUReference       String        @default("no aplica")
+  GPUInfo            String        @default("no aplica")
+  boardReference     String?
+  boardInfo          String?
+  storageReference   String
+  storageInfo        String
+  extraInfo          String
+  category           Enum_Category
+  removed            Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Loan {
+  loanId            String           @id @default(cuid())
+  user              User             @relation(fields: [userId], references: [id])
+  peripherals       LoanPeripheral[]
+  devices           LoanDevice[]
+  tiket             Tiket[]
+  userId            String
+  departureLocation String
+  arrivalLocation   String
+  startDate         DateTime
+  endDate           DateTime
+  returnDate        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Enum_Type {
+  MOUSE
+  KEYBOARD
+  MONITOR
+}
+
+model Peripheral {
+  id           String           @id @default(cuid())
+  loans        LoanPeripheral[]
+  serialNumber String
+  model        String
+  type         Enum_Type
+  reference    String
+  extraInfo    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Enum_State {
+  Open
+  InProgress
+  Closed
+}
+
+model Tiket {
+  tiketId String @id @default(cuid())
+
+  state Enum_State
+
+  loanId   String
+  deviceId String
+
+  loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([loanId, deviceId])
+}
+
+///auxiliary table between loan and peripheral
+model LoanPeripheral {
+  loanId       String
+  peripheralId String
+  loan         Loan       @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
+  peripheral   Peripheral @relation(fields: [peripheralId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([loanId, peripheralId])
+}
+
+model LoanDevice {
+  loanId   String
+  deviceId String
+
+  loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([loanId, deviceId])
 }
