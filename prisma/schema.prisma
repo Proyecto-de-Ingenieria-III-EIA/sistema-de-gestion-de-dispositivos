@@ -56,9 +56,10 @@ model Session {
 
 enum Enum_RoleName {
   ADMIN
-  USER
+  CLIENT
   TECHNICAL
   COORDINATOR
+  EMPLOYEE
 }
 
 model Role {
@@ -80,7 +81,7 @@ enum Enum_Category {
 model Device {
   deviceId           String        @id @default(cuid())
   loans              LoanDevice[]
-  tikets             Tiket[]
+  tickets            Ticket[]
   serialNumber       String
   model              String
   RAMReference       String
@@ -89,11 +90,12 @@ model Device {
   perocessorInfo     String
   GPUReference       String        @default("no aplica")
   GPUInfo            String        @default("no aplica")
-  boardReference     String?
-  boardInfo          String?
+  boardReference     String        @default("no aplica")
+  boardInfo          String        @default("no aplica")
   storageReference   String
   storageInfo        String
   extraInfo          String
+  price              Decimal
   category           Enum_Category
   removed            Boolean       @default(false)
 
@@ -102,17 +104,18 @@ model Device {
 }
 
 model Loan {
-  loanId            String           @id @default(cuid())
-  user              User             @relation(fields: [userId], references: [id])
-  peripherals       LoanPeripheral[]
-  devices           LoanDevice[]
-  tiket             Tiket[]
-  userId            String
-  departureLocation String
-  arrivalLocation   String
-  startDate         DateTime
-  endDate           DateTime
-  returnDate        DateTime?
+  loanId          String           @id @default(cuid())
+  user            User             @relation(fields: [userId], references: [id])
+  peripherals     LoanPeripheral[]
+  devices         LoanDevice[]
+  ticket          Ticket[]
+  userId          String
+  totalPrice      Decimal
+  originLocation  String
+  arrivalLocation String
+  startDate       DateTime
+  endDate         DateTime
+  returnDate      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -122,6 +125,9 @@ enum Enum_Type {
   MOUSE
   KEYBOARD
   MONITOR
+  HEADSET
+  WEBCAM
+  OTHER
 }
 
 model Peripheral {
@@ -130,7 +136,8 @@ model Peripheral {
   serialNumber String
   model        String
   type         Enum_Type
-  reference    String
+  brand        String
+  price        Decimal
   extraInfo    String
 
   createdAt DateTime @default(now())
@@ -138,18 +145,18 @@ model Peripheral {
 }
 
 enum Enum_State {
-  Open
-  InProgress
-  Closed
+  OPEN
+  IN_PROGRESS
+  CLOSED
 }
 
-model Tiket {
-  tiketId String @id @default(cuid())
-
-  state Enum_State
-
-  loanId   String
-  deviceId String
+model Ticket {
+  ticketId   String     @id @default(cuid())
+  state      Enum_State
+  subject    String
+  desription String
+  loanId     String
+  deviceId   String
 
   loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
   device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
