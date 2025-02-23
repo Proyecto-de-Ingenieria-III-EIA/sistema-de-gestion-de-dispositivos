@@ -79,7 +79,7 @@ enum Enum_Category {
 }
 
 model Device {
-  deviceId           String        @id @default(cuid())
+  id           String        @id @default(cuid())
   loans              LoanDevice[]
   tickets            Ticket[]
   serialNumber       String
@@ -104,11 +104,11 @@ model Device {
 }
 
 model Loan {
-  loanId          String           @id @default(cuid())
+  id          String           @id @default(cuid())
   user            User             @relation(fields: [userId], references: [id])
   peripherals     LoanPeripheral[]
   devices         LoanDevice[]
-  ticket          Ticket[]
+  tickets          Ticket[]
   userId          String
   totalPrice      Decimal
   originLocation  String
@@ -144,22 +144,22 @@ model Peripheral {
   updatedAt DateTime @updatedAt
 }
 
-enum Enum_State {
+enum Enum_TicketState {
   OPEN
   IN_PROGRESS
   CLOSED
 }
 
 model Ticket {
-  ticketId   String     @id @default(cuid())
-  state      Enum_State
+  id   String     @id @default(cuid())
+  state      Enum_TicketState
   subject    String
   desription String
   loanId     String
   deviceId   String
 
-  loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
-  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,7 +171,7 @@ model Ticket {
 model LoanPeripheral {
   loanId       String
   peripheralId String
-  loan         Loan       @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
+  loan         Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
   peripheral   Peripheral @relation(fields: [peripheralId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
@@ -184,8 +184,8 @@ model LoanDevice {
   loanId   String
   deviceId String
 
-  loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
-  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
