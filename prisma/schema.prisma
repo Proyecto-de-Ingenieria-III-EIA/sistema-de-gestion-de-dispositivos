@@ -14,7 +14,7 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role?     @relation(fields: [roleId], references: [id])
-  roleId        String?
+  roleId        String?   @default("1")
   accounts      Account[]
   sessions      Session[]
   loans         Loan[]
@@ -83,21 +83,58 @@ model Device {
   loans              LoanDevice[]
   tickets            Ticket[]
   serialNumber       String
+  brand              String
   model              String
-  RAMReference       String
-  RAMInfo            String
-  processorReference String
-  perocessorInfo     String
-  GPUReference       String        @default("no aplica")
-  GPUInfo            String        @default("no aplica")
-  boardReference     String        @default("no aplica")
-  boardInfo          String        @default("no aplica")
-  storageReference   String
-  storageInfo        String
+  components         DeviceComponent[]
   extraInfo          String
   price              Decimal
   category           Enum_Category
   removed            Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Enum_ComponentType {
+  RAM
+  PROCESSOR
+  GPU
+  BOARD
+  STORAGE
+}
+
+model Component {
+  id   String @id @default(cuid())
+
+  brand String
+  model String
+  type  Enum_ComponentType
+  description String
+  
+  devices DeviceComponent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeviceComponent{
+  deviceId String
+  componentId String
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  component Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([deviceId, componentId])
+}
+
+model city {
+  id   String @id @default(cuid())
+  name String
+
+  loansOrigin Loan[] @relation("orgin")
+  loansArrival Loan[] @relation("arrival")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -111,8 +148,10 @@ model Loan {
   tickets          Ticket[]
   userId          String
   totalPrice      Decimal
-  originLocation  String
-  arrivalLocation String
+  originCity    city             @relation(fields: [originCityId], references: [id], name: "orgin")
+  originCityId  String
+  arrivalCity   city             @relation(fields: [arrivalCityId], references: [id],name: "arrival")
+  arrivalCityId String
   startDate       DateTime
   endDate         DateTime
   returnDate      DateTime?
@@ -121,7 +160,7 @@ model Loan {
   updatedAt DateTime @updatedAt
 }
 
-enum Enum_Type {
+enum Enum_PeripheralType {
   MOUSE
   KEYBOARD
   MONITOR
@@ -135,7 +174,7 @@ model Peripheral {
   loans        LoanPeripheral[]
   serialNumber String
   model        String
-  type         Enum_Type
+  type         Enum_PeripheralType
   brand        String
   price        Decimal
   extraInfo    String
