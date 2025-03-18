@@ -148,6 +148,7 @@ model Loan {
   tickets          Ticket[]
   userId          String
   totalPrice      Decimal
+
   originCityId  String
   originCity    city             @relation(fields: [originCityId], references: [id], name: "orgin")
   arrivalCityId String
