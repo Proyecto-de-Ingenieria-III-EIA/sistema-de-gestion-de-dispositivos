@@ -7,12 +7,15 @@ import { loanTypes } from './queries/loan/types';
 import { loanResolvers } from './queries/loan/resolvers';
 import { deviceTypes } from './queries/device/types';
 import { cityTypes } from './queries/city/types';
+import { deviceResolvers } from './queries/device/resolvers';
+import { peripheralTypes } from './queries/peripheral/types';
+import { peripheralResolvers } from './queries/peripheral/resolvers';
 
 const defaultTypes = gql`
   scalar DateTime
 `;
 
-const types = [defaultTypes, userTypes, sessionTypes, roleTypes, cityTypes, deviceTypes, loanTypes];
-const resolvers = [userResolvers, loanResolvers];
+const types = [defaultTypes, userTypes, sessionTypes, roleTypes, cityTypes, deviceTypes, loanTypes, peripheralTypes];
+const resolvers = [userResolvers, loanResolvers, deviceResolvers, peripheralResolvers];
 
 export { types, resolvers };

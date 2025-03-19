@@ -148,11 +148,10 @@ model Loan {
   tickets          Ticket[]
   userId          String
   totalPrice      Decimal
-
-  originCityId  String
   originCity    city             @relation(fields: [originCityId], references: [id], name: "orgin")
-  arrivalCityId String
+  originCityId  String
   arrivalCity   city             @relation(fields: [arrivalCityId], references: [id],name: "arrival")
+  arrivalCityId String
   startDate       DateTime
   endDate         DateTime
   returnDate      DateTime?
@@ -179,6 +178,7 @@ model Peripheral {
   brand        String
   price        Decimal
   extraInfo    String
+  removed      Boolean  @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
