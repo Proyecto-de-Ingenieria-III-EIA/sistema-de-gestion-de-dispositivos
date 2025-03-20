@@ -6,6 +6,7 @@ const loanTypes = gql`
     APPROVED
     REJECTED
     EXTENDED
+    FINISHED
   }
 
   type Loan {
