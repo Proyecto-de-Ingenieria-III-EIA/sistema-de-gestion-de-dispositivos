@@ -1,0 +1,31 @@
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  sync-fork:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Git
+        run: |
+          # Configura el nombre y email con valores fijos o sustitúyelos si lo deseas
+          git config user.name "Gersh0"
+          git config user.email "germinatorcofee@gmail.com"
+
+      - name: Agregar remoto del fork
+        run: |
+          # Reemplaza "tu-usuario" y "tu-fork" por los valores correspondientes a tu fork
+          git remote add fork https://${{ secrets.GERSHO_REPO}}@github.com/Gersh0/sistema-de-gestion-de-dispositivos.git
+
+      - name: Actualizar fork
+        env:
+          TARGET_BRANCH: ${{ github.ref_name }}
+        run: |
+          git push fork HEAD:$TARGET_BRANCH --force
