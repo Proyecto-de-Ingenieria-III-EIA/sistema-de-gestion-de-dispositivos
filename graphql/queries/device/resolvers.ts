@@ -86,12 +86,25 @@ interface UpdateDeviceInput {
           throw new GraphQLError('Dispositivo no encontrado.');
         }
       
+        // Verifica si el dispositivo está en préstamo activo con estado PENDING, APPROVED o EXTENDED
+        const activeLoan = await db.loanDevice.findFirst({
+          where: {
+            deviceId: id,
+            loan: { is: { status: { in: ['PENDING', 'APPROVED', 'EXTENDED'] } } },
+          },
+        });
+      
+        if (activeLoan) {
+          throw new GraphQLError('El dispositivo está en préstamo activo y no se puede eliminar.');
+        }
+      
         await db.device.update({
           where: { id },
           data: { removed: true },
         });
         return { message: 'Dispositivo marcado como eliminado correctamente' };
-      },
+      }
+      ,
     },
   };
   
