@@ -23,9 +23,15 @@ const loanTypes = gql`
     arrivalCity: City!       
     peripherals: [Peripheral!]!
   }
+  
+  input getLoansByUserEmailInput {
+    userEmail: String!
+  }
 
   input CreateLoanInput {
+    userEmail: String!
     deviceIds: [String!]!
+    peripheralsIds: [String!]!
     startDate: DateTime!
     endDate: DateTime!
     originCityId: String!   
@@ -52,6 +58,7 @@ const loanTypes = gql`
   type Query {
     getLoans: [Loan!]!
     getLoanReminders: [Loan!]!
+    getLoansByUserEmail(input: getLoansByUserEmailInput!): [Loan!]!
   }
 `;
 
