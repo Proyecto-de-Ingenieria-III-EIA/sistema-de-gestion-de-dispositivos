@@ -56,7 +56,9 @@ const userResolvers: Resolver = {
           name: args.name,
         },
       });
-
+      if (!role) {
+        throw new GraphQLError('Role not found.');
+      }
       return db.user.update({
         where: {
           id: args.id,
@@ -64,9 +66,10 @@ const userResolvers: Resolver = {
         data: {
           roleId: role?.id ?? '',
         },
-      });
+      });  
     },
   },
+
 };
 
 export { userResolvers };
