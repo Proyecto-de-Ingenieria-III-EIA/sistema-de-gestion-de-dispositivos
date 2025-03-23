@@ -6,6 +6,7 @@ const loanTypes = gql`
     APPROVED
     REJECTED
     EXTENDED
+    FINISHED
   }
 
   type Loan {
@@ -18,6 +19,9 @@ const loanTypes = gql`
     rejectionReason: String
     createdAt: DateTime!
     updatedAt: DateTime!
+    originCity: City! 
+    arrivalCity: City!       
+    peripherals: [Peripheral!]!
   }
 
   input CreateLoanInput {

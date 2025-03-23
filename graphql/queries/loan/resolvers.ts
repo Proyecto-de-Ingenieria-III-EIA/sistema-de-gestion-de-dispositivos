@@ -69,6 +69,7 @@ const loanResolvers: Resolver = {
           arrivalCity: { connect: { id: input.arrivalCityId } },
           startDate: new Date(input.startDate),
           endDate: new Date(input.endDate),
+          status: 'PENDING',
           devices: {
             create: input.deviceIds.map((id) => ({
               device: { connect: { id } },
@@ -97,9 +98,7 @@ const loanResolvers: Resolver = {
       const updatedLoan = await db.loan.update({
         where: { id: input.loanId },
         data: {
-          // Actualiza el campo de estado (asegúrate de tener el campo en el modelo Prisma)
-          // status: input.status,
-          // O agrega la lógica condicional deseada
+          status: input.status,
         },
         include: {
           devices: true,
@@ -126,7 +125,7 @@ const loanResolvers: Resolver = {
         where: { id: input.loanId },
         data: {
           endDate: new Date(input.newEndDate),
-          // status: 'EXTENDED'
+          status: 'EXTENDED'
         },
         include: {
           devices: true,
