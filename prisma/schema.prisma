@@ -14,7 +14,7 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role?     @relation(fields: [roleId], references: [id])
-  roleId        String?   @default("1")
+  roleId        String?   @default("cm8lyndzk0009356m0y6ajd67")//todo: Cambiar este ID por el nombre del rol
   accounts      Account[]
   sessions      Session[]
   loans         Loan[]
@@ -69,6 +69,8 @@ model Role {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([name])
 }
 
 enum Enum_Category {
@@ -93,6 +95,8 @@ model Device {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([serialNumber])
 }
 
 enum Enum_ComponentType {
@@ -192,6 +196,9 @@ model Peripheral {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+
+  @@unique([serialNumber])
 }
 
 enum Enum_TicketState {
@@ -201,12 +208,12 @@ enum Enum_TicketState {
 }
 
 model Ticket {
-  id         String           @id @default(cuid())
-  state      Enum_TicketState
-  subject    String
+  id          String           @id @default(cuid())
+  state       Enum_TicketState
+  subject     String
   description String
-  loanId     String
-  deviceId   String
+  loanId      String
+  deviceId    String
 
   loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
