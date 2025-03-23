@@ -49,6 +49,7 @@ const userResolvers: Resolver = {
       });
     },
   },
+
   Mutation: {
     updateUserRole: async (parent, args, { db }) => {
       const role = await db.role.findFirst({
