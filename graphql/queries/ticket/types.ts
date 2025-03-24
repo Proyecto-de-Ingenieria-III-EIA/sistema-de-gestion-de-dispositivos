@@ -27,6 +27,10 @@ const ticketTypes = gql`
     technicianId: ID!
   }
 
+  input getUserAssignedTicketsInput {
+    state: Enum_TicketState
+  }
+
   input CloseTicketInput {
     ticketId: ID!
   }
@@ -34,12 +38,16 @@ const ticketTypes = gql`
   type Query {
     getTickets: [Ticket!]!
     getTicketById(id: ID!): Ticket
+    getTicketsByLoanId(loanId: ID!): [Ticket!]!
     getActiveTickets: [Ticket!]!
+    getAssignedTicketsByUserId(userId: ID!): [Ticket!]!
+    getUserAssignedTickets(input: getUserAssignedTicketsInput): [Ticket!]!
   }
 
   type Mutation {
     createTicket(input: CreateTicketInput!): Ticket!
     closeTicket(input: CloseTicketInput!): Ticket!
+    assignTicketToTechnician(ticketId: ID!, technicianId: ID!): Ticket!
   }
 `;
 

@@ -216,7 +216,7 @@ model Ticket {
   loanId      String
   deviceId    String
   technicianId String
-
+  
 
   technician  User @relation(fields: [technicianId], references: [id], onDelete: Cascade)
   loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)

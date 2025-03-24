@@ -11,6 +11,10 @@ interface CreateTicketInput {
   deviceId: string;
 }
 
+interface getUserAssignedTicketsInput {
+  state?: 'OPEN' | 'CLOSED' | 'IN_PROGRESS';
+}
+
 interface CloseTicketInput {
   ticketId: string;
 }
@@ -54,29 +58,25 @@ const ticketResolvers: Resolver = {
       }
       return tickets;
     },
-    getUserAssignedTickets: async (parent, args, { db, authData }) => {
+    getUserAssignedTickets: async (parent, {input}: {input:getUserAssignedTicketsInput}, { db, authData }) => {
       if (authData.role !== Enum_RoleName.TECHNICAL) {
         throw new GraphQLError('Solo los técnicos tienen tickets asignados');
       }
-      const user = db.user.findUnique({ where: { email: authData.email } });
-      const tickets = await db.ticket.findMany({ where: {}});
+      const user = await db.user.findUnique({ where: { email: authData.email } });
+      if (!user) {
+        throw new GraphQLError('Usuario no encontrado.');
+      }
+      let tickets;
+      if (input.state) {
+        tickets = await db.ticket.findMany({ where: { technicianId: user.id, state: input.state } });
+      } else {
+        tickets = await db.ticket.findMany({ where: { technicianId: user.id } });
+      }
       if (!tickets) {
         throw new GraphQLError('No se encontraron tickets asignados.');
       }
       return tickets
     },
-    getUserAssignedActiveTickets: async (parent, args, { db, authData }) => {
-      if (authData.role !== Enum_RoleName.TECHNICAL) {
-        throw new GraphQLError('Solo los técnicos tienen tickets asignados');
-      }
-      const user = db.user.findUnique({ where: { email: authData.email } });
-      const tickets = await db.ticket.findMany({ where: { state: 'OPEN' }});
-      if (!tickets) {
-        throw new GraphQLError('No se encontraron tickets activos asignados.');
-      }
-      return tickets
-    }
-
   },
 
   Mutation: {
@@ -109,6 +109,26 @@ const ticketResolvers: Resolver = {
       });
       return closedTicket;
     },
+    assignTicketToTechnician: async (parent, { ticketId, technicianId }: { ticketId: string, technicianId: string }, { db, authData }) => {
+      if (authData.role !== 'ADMIN') {
+        throw new GraphQLError('No autorizado para asignar técnicos a tickets.');
+      }
+      const ticket = await db.ticket.findUnique({ where: { id: ticketId } });
+      if (!ticket) {
+        throw new GraphQLError('Ticket no encontrado.');
+      }
+      const technician = await db.user.findUnique({ where: { id: technicianId } });
+      if (!technician) {
+        throw new GraphQLError('Técnico no encontrado.');
+      }
+      const assignedTicket = await db.ticket.update({
+        where: { id: ticketId },
+        data: {
+          technician: { connect: { id: technicianId } },
+        },
+      });
+      return assignedTicket;
+    }
   },
 };
 

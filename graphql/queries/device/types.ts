@@ -58,6 +58,7 @@ const deviceTypes = gql`
   type Query {
     getDevices: [Device!]!
     getDeviceById(id: ID!, input: GetDevicesByCityInput): Device
+    getDevicesByCity(input: GetDevicesByCityInput!): [Device!]!
   }
 
   # Definición de las operaciones Mutation

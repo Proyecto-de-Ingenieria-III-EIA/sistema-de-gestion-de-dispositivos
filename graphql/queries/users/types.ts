@@ -11,6 +11,10 @@ const userTypes = gql`
     role: Role
   }
 
+  input UserByEmailInput {
+  email: String
+  }
+
   type Query {
     getUsers: [User]
     getUserByEmail(email: String): User
