@@ -42,20 +42,43 @@ const loanResolvers: Resolver = {
         },
       });
     },
-    getLoansByUserEmail: async (parent, { input }: { input: getLoansByUserEmailInput }, { db, authData }) => {
+    getLoansByUserEmail: async (
+      parent,
+      { input }: { input: getLoansByUserEmailInput },
+      { db, authData }
+    ) => {
       if (authData.email !== input.userEmail && authData.role !== 'ADMIN') {
         throw new GraphQLError('No autorizado para ver los préstamos de otro usuario.');
       }
-      return await db.loan.findMany({
-        where: { userId: await db.user.findUnique({ where: { email: input.userEmail } }).then((u) => (u === null || u.id === null) ? '' : u.id).catch(() => '') },
+      const userId = await db.user
+        .findUnique({ where: { email: input.userEmail } })
+        .then((u) => (u === null || u.id === null ? '' : u.id))
+        .catch(() => '');
+      const loans = await db.loan.findMany({
+        where: { userId },
         include: {
           user: true,
-          devices: true,
+          devices: {
+            include: {
+              device: true,
+            },
+          },
           peripherals: true,
           originCity: true,
           arrivalCity: true,
         },
       });
+      const transformedLoans = loans.map(loan => ({
+        ...loan,
+        devices: loan.devices.map(loanDevice => {
+          if (!loanDevice.device) {
+            throw new Error('Dispositivo no encontrado en el registro del préstamo.');
+          }
+          return loanDevice.device;
+        })
+      }));
+
+      return transformedLoans;
     },
     getLoanReminders: async (parent, args, { db }) => {
       const now = new Date();
@@ -163,6 +186,9 @@ const loanResolvers: Resolver = {
       { input }: { input: ExtendLoanInput },
       { db, authData }
     ) => {
+      if (authData.role !== 'ADMIN') {
+        throw new GraphQLError('No autorizado para extender el préstamo.');
+      }
       const loan = await db.loan.findUnique({ where: { id: input.loanId } });
       if (!loan) {
         throw new GraphQLError('Préstamo no encontrado.');
