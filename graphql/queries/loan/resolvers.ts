@@ -2,11 +2,17 @@ import { Resolver } from '@/types';
 import { GraphQLError } from 'graphql';
 
 interface CreateLoanInput {
+  userEmail: string;
   deviceIds: string[];
+  peripheralsIds: string[];
   startDate: Date;
   endDate: Date;
   originCityId: string;
   arrivalCityId: string;
+}
+
+interface getLoansByUserEmailInput {
+  userEmail: string;
 }
 
 interface UpdateLoanStatusInput {
@@ -23,9 +29,27 @@ interface ExtendLoanInput {
 const loanResolvers: Resolver = {
   Query: {
     getLoans: async (parent, args, { db, authData }) => {
+      if (authData.role !== 'ADMIN') {
+        throw new GraphQLError('No autorizado para ver los préstamos.');
+      }
       return await db.loan.findMany({
-        where: { userId: authData.email },
         include: {
+          user: true,
+          devices: true,
+          peripherals: true,
+          originCity: true,
+          arrivalCity: true,
+        },
+      });
+    },
+    getLoansByUserEmail: async (parent, { input }: { input: getLoansByUserEmailInput }, { db, authData }) => {
+      if (authData.email !== input.userEmail && authData.role !== 'ADMIN') {
+        throw new GraphQLError('No autorizado para ver los préstamos de otro usuario.');
+      }
+      return await db.loan.findMany({
+        where: { userId: await db.user.findUnique({ where: { email: input.userEmail } }).then((u) => (u === null || u.id === null) ? '' : u.id).catch(() => '') },
+        include: {
+          user: true,
           devices: true,
           peripherals: true,
           originCity: true,
@@ -48,7 +72,7 @@ const loanResolvers: Resolver = {
     createLoan: async (parent, { input }: { input: CreateLoanInput }, { db, authData }) => {
       const activeLoans = await db.loan.count({
         where: {
-          userId: authData.email,
+          userId: await db.user.findUnique({ where: { email: input.userEmail } }).then((u) => (u === null || u.id === null) ? '' : u.id).catch(() => ''),
           returnDate: null,
         },
       });
@@ -60,11 +84,31 @@ const loanResolvers: Resolver = {
         throw new GraphQLError('La fecha de inicio debe ser anterior a la fecha de fin.');
       }
 
+      const devices = await db.device.findMany({
+        where: {
+          id: { in: input.deviceIds },
+          loans: {
+            some: {
+              loan: {
+                status: { in: ['PENDING', 'APPROVED', 'EXTENDED'] },
+                OR: [
+                  { startDate: { lte: new Date(input.startDate) } },
+                  { endDate: { gte: new Date(input.endDate) } },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      if (devices.length) {
+        throw new GraphQLError('Uno o más dispositivos seleccionados no están disponibles. Disponibles: ' + devices.map((d) => d.id).join(', '));
+      }
+
       const newLoan = await db.loan.create({
         data: {
-          user: { connect: { email: authData.email } },
-          totalPrice: 0, // Cálculo pendiente según las reglas de negocio
-          // Utilizamos nested writes para relacionar las ciudades
+          user: { connect: { email: input.userEmail } },
+          totalPrice: 0,
           originCity: { connect: { id: input.originCityId } },
           arrivalCity: { connect: { id: input.arrivalCityId } },
           startDate: new Date(input.startDate),
@@ -73,6 +117,11 @@ const loanResolvers: Resolver = {
           devices: {
             create: input.deviceIds.map((id) => ({
               device: { connect: { id } },
+            })),
+          },
+          peripherals: {
+            create: input.peripheralsIds.map((id) => ({
+              peripheral: { connect: { id } },
             })),
           },
         },
