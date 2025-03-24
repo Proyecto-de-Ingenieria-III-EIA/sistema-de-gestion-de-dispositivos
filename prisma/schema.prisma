@@ -14,10 +14,11 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role?     @relation(fields: [roleId], references: [id])
-  roleId        String?
+  roleId        String?   @default("cm8lyndzk0009356m0y6ajd67")//todo: Cambiar este ID por el nombre del rol
   accounts      Account[]
   sessions      Session[]
   loans         Loan[]
+  assignedTickets Ticket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,6 +70,8 @@ model Role {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([name])
 }
 
 enum Enum_Category {
@@ -79,40 +82,91 @@ enum Enum_Category {
 }
 
 model Device {
-  deviceId           String        @id @default(cuid())
-  loans              LoanDevice[]
-  tickets            Ticket[]
-  serialNumber       String
-  model              String
-  RAMReference       String
-  RAMInfo            String
-  processorReference String
-  perocessorInfo     String
-  GPUReference       String        @default("no aplica")
-  GPUInfo            String        @default("no aplica")
-  boardReference     String        @default("no aplica")
-  boardInfo          String        @default("no aplica")
-  storageReference   String
-  storageInfo        String
-  extraInfo          String
-  price              Decimal
-  category           Enum_Category
-  removed            Boolean       @default(false)
+  id           String            @id @default(cuid())
+  loans        LoanDevice[]
+  tickets      Ticket[]
+  serialNumber String
+  brand        String
+  model        String
+  components   DeviceComponent[]
+  extraInfo    String
+  price        Decimal
+  category     Enum_Category
+  removed      Boolean           @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serialNumber])
+}
+
+enum Enum_ComponentType {
+  RAM
+  PROCESSOR
+  GPU
+  BOARD
+  STORAGE
+}
+
+model Component {
+  id String @id @default(cuid())
+
+  brand       String
+  model       String
+  type        Enum_ComponentType
+  description String
+
+  devices DeviceComponent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model DeviceComponent {
+  deviceId    String
+  componentId String
+  device      Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  component   Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([deviceId, componentId])
+}
+
+model city {
+  id   String @id @default(cuid())
+  name String
+
+  loansOrigin  Loan[] @relation("orgin")
+  loansArrival Loan[] @relation("arrival")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Enum_LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXTENDED
+  FINISHED
+}
+
 model Loan {
-  loanId          String           @id @default(cuid())
+  id              String           @id @default(cuid())
   user            User             @relation(fields: [userId], references: [id])
   peripherals     LoanPeripheral[]
   devices         LoanDevice[]
-  ticket          Ticket[]
+  tickets         Ticket[]
   userId          String
   totalPrice      Decimal
-  originLocation  String
-  arrivalLocation String
+  status          Enum_LoanStatus
+  rejectionReason String?
+  originCity      city             @relation(fields: [originCityId], references: [id], name: "orgin")
+  originCityId    String
+  arrivalCity     city             @relation(fields: [arrivalCityId], references: [id], name: "arrival")
+  arrivalCityId   String
   startDate       DateTime
   endDate         DateTime
   returnDate      DateTime?
@@ -121,7 +175,7 @@ model Loan {
   updatedAt DateTime @updatedAt
 }
 
-enum Enum_Type {
+enum Enum_PeripheralType {
   MOUSE
   KEYBOARD
   MONITOR
@@ -131,47 +185,54 @@ enum Enum_Type {
 }
 
 model Peripheral {
-  id           String           @id @default(cuid())
+  id           String              @id @default(cuid())
   loans        LoanPeripheral[]
   serialNumber String
   model        String
-  type         Enum_Type
+  type         Enum_PeripheralType
   brand        String
   price        Decimal
   extraInfo    String
+  removed      Boolean             @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+
+  @@unique([serialNumber])
 }
 
-enum Enum_State {
+enum Enum_TicketState {
   OPEN
   IN_PROGRESS
   CLOSED
 }
 
 model Ticket {
-  ticketId   String     @id @default(cuid())
-  state      Enum_State
-  subject    String
-  desription String
-  loanId     String
-  deviceId   String
+  id          String           @id @default(cuid())
+  state       Enum_TicketState
+  subject     String
+  description String
+  loanId      String
+  deviceId    String
+  technicianId String
+  
 
-  loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
-  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  technician  User @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([loanId, deviceId])
+  @@unique([loanId, deviceId, technicianId])
 }
 
 ///auxiliary table between loan and peripheral
 model LoanPeripheral {
   loanId       String
   peripheralId String
-  loan         Loan       @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
+  loan         Loan       @relation(fields: [loanId], references: [id], onDelete: Cascade)
   peripheral   Peripheral @relation(fields: [peripheralId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
@@ -184,8 +245,8 @@ model LoanDevice {
   loanId   String
   deviceId String
 
-  loan   Loan   @relation(fields: [loanId], references: [loanId], onDelete: Cascade)
-  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

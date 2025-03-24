@@ -49,6 +49,7 @@ const userResolvers: Resolver = {
       });
     },
   },
+
   Mutation: {
     updateUserRole: async (parent, args, { db }) => {
       const role = await db.role.findFirst({
@@ -56,10 +57,36 @@ const userResolvers: Resolver = {
           name: args.name,
         },
       });
-
+      if (!role) {
+        throw new GraphQLError('Role not found.');
+      }
       return db.user.update({
         where: {
           id: args.id,
+        },
+        data: {
+          roleId: role?.id ?? '',
+        },
+      });  
+    },
+    updateUserRoleByEmail: async (parent, args, { db, authData }) => {
+      if (authData.role !== Enum_RoleName.ADMIN) {
+        throw new GraphQLError('Not authorized. Admin role required.');
+      }
+      const role = await db.role.findFirst({
+        where: {
+          name: args.name,
+        },
+      });
+      if (!role) {
+        throw new GraphQLError('Role not found.');
+      }
+      if(authData.email === args.email) {
+        throw new GraphQLError('You cannot change your own role.');
+      }
+      return db.user.update({
+        where: {
+          email: args.email,
         },
         data: {
           roleId: role?.id ?? '',
