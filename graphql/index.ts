@@ -1,18 +1,18 @@
 import gql from 'graphql-tag';
-import { userResolvers } from './queries/users/resolvers';
-import { userTypes } from './queries/users/types';
-import { sessionTypes } from './queries/session/types';
-import { roleTypes } from './queries/role/types';
-import { loanTypes } from './queries/loan/types';
-import { loanResolvers } from './queries/loan/resolvers';
-import { deviceTypes } from './queries/device/types';
-import { cityTypes } from './queries/city/types';
-import { deviceResolvers } from './queries/device/resolvers';
-import { peripheralTypes } from './queries/peripheral/types';
-import { peripheralResolvers } from './queries/peripheral/resolvers';
-import { ticketResolvers } from './queries/ticket/resolvers';
-import { ticketTypes } from './queries/ticket/types';
-import { cityResolvers } from './queries/city/resolvers';
+import { userResolvers } from './entities/users/resolvers';
+import { userTypes } from './entities/users/types';
+import { sessionTypes } from './entities/session/types';
+import { roleTypes } from './entities/role/types';
+import { loanTypes } from './entities/loan/types';
+import { loanResolvers } from './entities/loan/resolvers';
+import { deviceTypes } from './entities/device/types';
+import { cityTypes } from './entities/city/types';
+import { deviceResolvers } from './entities/device/resolvers';
+import { peripheralTypes } from './entities/peripheral/types';
+import { peripheralResolvers } from './entities/peripheral/resolvers';
+import { ticketResolvers } from './entities/ticket/resolvers';
+import { ticketTypes } from './entities/ticket/types';
+import { cityResolvers } from './entities/city/resolvers';
 
 const defaultTypes = gql`
   scalar DateTime
