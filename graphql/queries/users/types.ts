@@ -18,6 +18,7 @@ const userTypes = gql`
 
   type Mutation {
     updateUserRole(id: String, roleName: String): User
+    updateUserRoleByEmail(email: String, roleName: String): User
   }
 `;
 

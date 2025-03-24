@@ -1,7 +1,10 @@
 import { Resolver } from '@/types';
 import { GraphQLError } from 'graphql';
+import { Enum_RoleName, PrismaClient, Role, User } from '@prisma/client';
+import { get } from 'http';
 
 interface CreateTicketInput {
+  technicianId: any;
   subject: string;
   description: string;
   loanId: string;
@@ -24,7 +27,58 @@ const ticketResolvers: Resolver = {
       }
       return ticket;
     },
+    getTicketsByLoanId: async (parent, { loanId }: { loanId: string }, { db }) => {
+      const tickets = await db.ticket.findMany({ where: { loanId } });
+      if (!tickets) {
+        throw new GraphQLError('No se encontraron tickets para el préstamo.');
+      }
+      return tickets;
+    },
+    getActiveTickets: async (parent, args, { db, authData }) => {
+      if (authData.role !== Enum_RoleName.COORDINATOR && authData.role !== Enum_RoleName.ADMIN) {
+        throw new GraphQLError('No autorizado para ver tickets activos.');
+      }
+      const tickets = await db.ticket.findMany({ where: { state: 'OPEN' } });
+      if (!tickets) {
+        throw new GraphQLError('No se encontraron tickets activos.');
+      }
+      return tickets;
+    },
+    getAssignedTicketsByUserId: async (parent, { userId }: { userId: string }, { db, authData }) => {
+      if (authData.role !== Enum_RoleName.COORDINATOR && authData.role !== Enum_RoleName.ADMIN) {
+        throw new GraphQLError('No autorizado para ver tickets asignados.');
+      }
+      const tickets = await db.ticket.findMany({ where: { technicianId: userId } });
+      if (!tickets) {
+        throw new GraphQLError('No se encontraron tickets asignados.');
+      }
+      return tickets;
+    },
+    getUserAssignedTickets: async (parent, args, { db, authData }) => {
+      if (authData.role !== Enum_RoleName.TECHNICAL) {
+        throw new GraphQLError('Solo los técnicos tienen tickets asignados');
+      }
+      const user = db.user.findUnique({ where: { email: authData.email } });
+      const tickets = await db.ticket.findMany({ where: {}});
+      if (!tickets) {
+        throw new GraphQLError('No se encontraron tickets asignados.');
+      }
+      return tickets
+    },
+    getUserAssignedActiveTickets: async (parent, args, { db, authData }) => {
+      if (authData.role !== Enum_RoleName.TECHNICAL) {
+        throw new GraphQLError('Solo los técnicos tienen tickets asignados');
+      }
+      const user = db.user.findUnique({ where: { email: authData.email } });
+      const tickets = await db.ticket.findMany({ where: { state: 'OPEN' }});
+      if (!tickets) {
+        throw new GraphQLError('No se encontraron tickets activos asignados.');
+      }
+      return tickets
+    }
+
   },
+
   Mutation: {
     createTicket: async (parent, { input }: { input: CreateTicketInput }, { db, authData }) => {
       const newTicket = await db.ticket.create({
@@ -34,6 +88,7 @@ const ticketResolvers: Resolver = {
           loan: { connect: { id: input.loanId } },
           device: { connect: { id: input.deviceId } },
           state: 'OPEN',
+          ...(input.technicianId && { technician: { connect: { id: input.technicianId } } }),
         },
       });
       return newTicket;

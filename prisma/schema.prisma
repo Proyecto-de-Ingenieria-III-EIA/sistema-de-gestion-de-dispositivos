@@ -18,6 +18,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   loans         Loan[]
+  assignedTickets Ticket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -214,14 +215,17 @@ model Ticket {
   description String
   loanId      String
   deviceId    String
+  technicianId String
 
+
+  technician  User @relation(fields: [technicianId], references: [id], onDelete: Cascade)
   loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([loanId, deviceId])
+  @@unique([loanId, deviceId, technicianId])
 }
 
 ///auxiliary table between loan and peripheral

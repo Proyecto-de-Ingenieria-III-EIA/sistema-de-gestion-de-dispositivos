@@ -14,6 +14,7 @@ const ticketTypes = gql`
     description: String!  # Mapea al campo "desription" del modelo Prisma
     loanId: ID!
     deviceId: ID!
+    technicianId: ID!
     createdAt: String!
     updatedAt: String!
   }
@@ -23,6 +24,7 @@ const ticketTypes = gql`
     description: String!  # Nota: aunque en Prisma se llame "desription", aquí usamos "description" para claridad
     loanId: ID!
     deviceId: ID!
+    technicianId: ID!
   }
 
   input CloseTicketInput {
@@ -32,6 +34,7 @@ const ticketTypes = gql`
   type Query {
     getTickets: [Ticket!]!
     getTicketById(id: ID!): Ticket
+    getActiveTickets: [Ticket!]!
   }
 
   type Mutation {

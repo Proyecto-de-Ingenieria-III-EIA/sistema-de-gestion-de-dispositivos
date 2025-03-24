@@ -32,6 +32,36 @@ interface UpdateDeviceInput {
         }
         return device;
       },
+      getDevicesByCity: async (parent, { cityName }: { cityName: string }, { db }) => {
+        const city = await db.city.findFirst({ where: { name: cityName } });
+        if (!city) {
+          throw new GraphQLError('Ciudad no encontrada.');
+        }
+        const loansByCity = await db.loan.findMany({
+          where: { arrivalCityId: city.id },
+        });
+        if (loansByCity.length === 0) {
+          throw new GraphQLError('No hay préstamos en esta ciudad.');
+        }
+        const deviceIdsByCityPromises = loansByCity.map(
+          async (loan) => await db.loanDevice.findMany({ where: { loanId: loan.id } })
+        );
+        const deviceIdsByCityResults = await Promise.all(deviceIdsByCityPromises);
+        if (deviceIdsByCityResults.length === 0) {
+          throw new GraphQLError('No hay dispositivos en esta ciudad.');
+        }
+        const deviceIdsByCity = deviceIdsByCityResults.flat().map((loanDevice) => loanDevice.deviceId);
+
+        if (deviceIdsByCity.length === 0) {
+          throw new GraphQLError('No hay dispositivos en esta ciudad.');
+        }
+
+        const devicesByCity = await db.device.findMany({
+          where: { id: { in: deviceIdsByCity } },
+        });
+        
+        return devicesByCity;
+      },
     },
     Mutation: {
       createDevice: async (parent, { input }: { input: CreateDeviceInput }, { db, authData }) => {
