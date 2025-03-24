@@ -18,7 +18,13 @@ interface UpdateDeviceInput {
     extraInfo?: string;
     price?: number;
     category?: 'LAPTOP' | 'PC' | 'MOBILE' | 'TABLET';
-  }
+}
+
+interface GetDevicesByCityInput{
+    cityName: string;
+    date?: Date;
+    category?: 'LAPTOP' | 'PC' | 'MOBILE' | 'TABLET';
+}
 
   const deviceResolvers: Resolver = {
     Query: {
@@ -32,14 +38,21 @@ interface UpdateDeviceInput {
         }
         return device;
       },
-      getDevicesByCity: async (parent, { cityName }: { cityName: string }, { db }) => {
-        const city = await db.city.findFirst({ where: { name: cityName } });
+      getDevicesByCity: async (parent, {input}: {input: GetDevicesByCityInput}, { db }) => {
+        const city = await db.city.findFirst({ where: { name: input.cityName } });
         if (!city) {
           throw new GraphQLError('Ciudad no encontrada.');
         }
-        const loansByCity = await db.loan.findMany({
-          where: { arrivalCityId: city.id },
-        });
+        let loansByCity;
+        if(input.date){
+          loansByCity = await db.loan.findMany({
+            where: { arrivalCityId: city.id},
+          }).then((loans) => loans.filter((loan) => input.date !== undefined && loan.startDate <= input.date && loan.endDate >= input.date));
+        } else{
+          loansByCity = await db.loan.findMany({
+            where: { arrivalCityId: city.id },
+          });
+        }
         if (loansByCity.length === 0) {
           throw new GraphQLError('No hay préstamos en esta ciudad.');
         }
@@ -51,17 +64,29 @@ interface UpdateDeviceInput {
           throw new GraphQLError('No hay dispositivos en esta ciudad.');
         }
         const deviceIdsByCity = deviceIdsByCityResults.flat().map((loanDevice) => loanDevice.deviceId);
-
         if (deviceIdsByCity.length === 0) {
           throw new GraphQLError('No hay dispositivos en esta ciudad.');
         }
+        let devicesByCity;          
+        if(input.category){
+          devicesByCity = await db.device.findMany({
+            where: {
+              id: { in: deviceIdsByCity },
+              category: input.category,
+            },
+          });
+        } else{
+          devicesByCity = await db.device.findMany({
+            where: { id: { in: deviceIdsByCity } },
+          });
+        }
+        if (devicesByCity.length === 0) {
+          throw new GraphQLError('No se encontraron dispositivos.');
+        }
 
-        const devicesByCity = await db.device.findMany({
-          where: { id: { in: deviceIdsByCity } },
-        });
-        
         return devicesByCity;
       },
+      
     },
     Mutation: {
       createDevice: async (parent, { input }: { input: CreateDeviceInput }, { db, authData }) => {

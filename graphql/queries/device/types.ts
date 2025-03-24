@@ -43,6 +43,12 @@ const deviceTypes = gql`
     category: Enum_Category
   }
 
+  input GetDevicesByCityInput {
+    cityName: String!
+    date: String
+    category: Enum_Category
+  }
+
   # Respuesta al eliminar un Device
   type DeleteResponse {
     message: String!
@@ -51,7 +57,7 @@ const deviceTypes = gql`
   # Definición de las operaciones Query
   type Query {
     getDevices: [Device!]!
-    getDeviceById(id: ID!): Device
+    getDeviceById(id: ID!, input: GetDevicesByCityInput): Device
   }
 
   # Definición de las operaciones Mutation
