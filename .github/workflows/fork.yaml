@@ -7,6 +7,9 @@ jobs:
   sync-fork:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout del repositorio
         uses: actions/checkout@v3
@@ -15,7 +18,6 @@ jobs:
 
       - name: Configurar Git
         run: |
-          # Configura el nombre y email con valores fijos o sustitúyelos si lo deseas
           git config user.name "Gersh0"
           git config user.email "germinatorcofee@gmail.com"
 
@@ -23,7 +25,6 @@ jobs:
         env:
           GERSHO_REPO: ${{ secrets.GERSHO_REPO }}
         run: |
-          # Reemplaza "tu-usuario" y "tu-fork" por los valores correspondientes a tu fork
           git remote add fork https://${{ secrets.GERSHO_REPO }}@github.com/Gersh0/sistema-de-gestion-de-dispositivos.git
 
       - name: Actualizar fork
